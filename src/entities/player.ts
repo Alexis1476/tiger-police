@@ -1,22 +1,26 @@
 import type { World } from 'koota'
+import { HUMANOID_HEIGHT, PRESIDENT } from '../characters/looks'
+import { createRig } from '../characters/models'
 import {
   CharacterBody,
   IsPlayer,
   Locomotion,
   MoveIntent,
   PrevTransform,
+  Rig,
   Transform,
   Velocity,
   View,
+  Weapon,
 } from '../ecs/traits'
 import type { GameContext } from '../engine/context'
 import { PLAYER } from '../game/config'
-import { createCharacterBody, makeCharacterMesh } from './character'
+import { SPAWN_Y, createCharacterBody } from './character'
 
-export function spawnPlayer(world: World, { physics }: GameContext) {
-  const { x, z } = PLAYER.spawn
-  const body = createCharacterBody(physics, x, z, PLAYER.radius, PLAYER.height)
-  const start = { x, y: 0.05, z, yaw: Math.PI }
+export function spawnPlayer(world: World, { physics }: GameContext, at: { x: number; z: number; yaw: number }) {
+  const body = createCharacterBody(physics, at.x, at.z, PLAYER.radius, HUMANOID_HEIGHT)
+  const rig = createRig('player', PRESIDENT)
+  const start = { x: at.x, y: SPAWN_Y, z: at.z, yaw: at.yaw }
   return world.spawn(
     IsPlayer,
     Transform(start),
@@ -24,7 +28,9 @@ export function spawnPlayer(world: World, { physics }: GameContext) {
     Velocity,
     MoveIntent,
     Locomotion({ jumpSpeed: PLAYER.jump }),
+    Weapon,
     CharacterBody(body),
-    View(makeCharacterMesh({ height: PLAYER.height, body: 0x3d5a36, skin: 0xc68a5c, hat: 0x1f2f1c })),
+    Rig(rig),
+    View(rig.root),
   )
 }

@@ -1,5 +1,5 @@
 import type { World } from 'koota'
-import { IsPlayer, MoveIntent } from '../ecs/traits'
+import { IsPlayer, MoveIntent, Weapon } from '../ecs/traits'
 import { CameraRig, GameMode, Input } from '../ecs/world'
 import { PLAYER } from '../game/config'
 
@@ -17,13 +17,14 @@ export function playerControlSystem(world: World) {
     if (k.has('KeyS') || k.has('ArrowDown')) iz -= 1
     if (k.has('KeyD') || k.has('ArrowRight')) ix += 1
     if (k.has('KeyA') || k.has('ArrowLeft')) ix -= 1
+    ix += input.stickX
+    iz += input.stickY
     const len = Math.hypot(ix, iz)
     if (len > 1) {
       ix /= len
       iz /= len
     }
   }
-  const sprint = k.has('ShiftLeft') || k.has('ShiftRight')
 
   // Camera forward and right on the ground plane.
   const fx = Math.sin(yaw)
@@ -31,11 +32,11 @@ export function playerControlSystem(world: World) {
   const rx = -Math.cos(yaw)
   const rz = Math.sin(yaw)
 
-  world.query(IsPlayer, MoveIntent).updateEach(([intent]) => {
+  world.query(IsPlayer, MoveIntent, Weapon).updateEach(([intent, w]) => {
+    const sprint = (k.has('ShiftLeft') || k.has('ShiftRight') || input.runToggle) && !w.aiming && w.reload <= 0
     intent.x = fx * iz + rx * ix
     intent.z = fz * iz + rz * ix
-    intent.speed = sprint ? PLAYER.sprint : PLAYER.walk
-    intent.jump = playing && input.jumpPressed
+    intent.speed = w.aiming ? PLAYER.aimWalk : sprint ? PLAYER.sprint : PLAYER.walk
+    intent.jump = playing && input.pressed.has('Space')
   })
-  input.jumpPressed = false
 }

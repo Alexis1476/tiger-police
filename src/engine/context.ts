@@ -1,4 +1,6 @@
 import type { World } from 'koota'
+import type { Audio } from './audio'
+import type { Effects } from './effects'
 import type { Physics } from './physics'
 import type { Render } from './renderer'
 
@@ -6,6 +8,8 @@ import type { Render } from './renderer'
 export type GameContext = {
   physics: Physics
   render: Render
+  audio: Audio
+  effects: Effects
 }
 
 /** A system is a plain function run once per fixed step or once per frame. */

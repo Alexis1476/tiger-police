@@ -12,19 +12,49 @@ export const COYOTE_TIME = 0.12
 export const PLAYER = {
   walk: 3.5,
   sprint: 6.6,
+  aimWalk: 2.6,
   jump: 6.3,
   radius: 0.38,
-  height: 1.8,
-  spawn: { x: 0, z: 14 },
 }
 
 export const CIVILIAN = {
-  count: 150,
+  count: 16,
   radius: 0.34,
-  height: 1.7,
   minSpeed: 1.0,
-  maxSpeed: 1.8,
-  wanderRadius: 14,
+  maxSpeed: 1.45,
+}
+
+export const BANDIT = {
+  count: 6,
+  radius: 0.34,
+  minWalk: 1.45,
+  maxWalk: 1.8,
+  fleeSpeed: 4.9,
+  /** Bandits notice the police within this distance. */
+  spotDistance: 9,
+  /** …and calm down after staying this far away for a few seconds. */
+  escapeDistance: 26,
+  stunTime: 7,
+  cuffTime: 1.9,
+  arrestReach: 2.4,
+  respawnTime: 14,
+  /** New bandits appear at least this far from the player. */
+  spawnDistance: 18,
+  respawnDistance: 36,
+}
+
+export const PROJECTILE = {
+  gravity: 7,
+  /** Hits that leave a bullet slower than this (m/s) stop it. */
+  minSpeed: Math.SQRT2,
+  maxBounces: 5,
+  restitution: 0.45,
+  friction: 0.8,
+}
+
+export const SCORE = {
+  arrest: 50_000,
+  civilianFine: 20_000,
 }
 
 export const CAMERA = {
@@ -35,6 +65,3 @@ export const CAMERA = {
   minPitch: -1.2,
   maxPitch: 0.9,
 }
-
-/** Half-size of the playable square, in metres. */
-export const WORLD_HALF = 48

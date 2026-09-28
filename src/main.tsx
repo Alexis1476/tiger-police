@@ -1,50 +1,45 @@
 import { WorldProvider } from 'koota/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { mulberry32, range } from './core/math'
-import { world } from './ecs/world'
-import { spawnCivilian } from './entities/civilian'
-import { buildLevel, isClear } from './entities/level'
-import { spawnPlayer } from './entities/player'
+import { preloadCharacterModels } from './characters/models'
+import { createGameWorld } from './ecs/world'
+import { createAudio } from './engine/audio'
 import type { GameContext } from './engine/context'
+import { createEffects } from './engine/effects'
 import { attachInput } from './engine/input'
-import { registerLifecycle } from './engine/lifecycle'
 import { startLoop } from './engine/loop'
 import { createPhysics } from './engine/physics'
 import { createRenderer } from './engine/renderer'
-import { CIVILIAN, PLAYER, WORLD_HALF } from './game/config'
 import { createGameFlow } from './game/flow'
 import { pipeline } from './game/pipeline'
+import { setupGame } from './game/setup'
 import { App } from './ui/App'
 import './ui/styles.css'
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
 async function boot() {
   const canvas = document.getElementById('game') as HTMLCanvasElement
+  const world = createGameWorld()
 
+  const render = createRenderer(canvas)
   const ctx: GameContext = {
     physics: await createPhysics(),
-    render: createRenderer(canvas),
-  }
-  registerLifecycle(world, ctx)
-
-  const rng = mulberry32(1538)
-  const { blockers } = buildLevel(world, ctx, rng)
-  spawnPlayer(world, ctx)
-
-  const area = WORLD_HALF - 10
-  let spawned = 0
-  for (let tries = 0; spawned < CIVILIAN.count && tries < CIVILIAN.count * 20; tries++) {
-    const x = range(rng, -area, area)
-    const z = range(rng, -area, area)
-    const nearPlayer = Math.hypot(x - PLAYER.spawn.x, z - PLAYER.spawn.z) < 3
-    if (nearPlayer || !isClear(blockers, x, z, 1)) continue
-    spawnCivilian(world, ctx, x, z, rng)
-    spawned++
+    render,
+    audio: createAudio(),
+    effects: createEffects(render.scene),
   }
 
-  const flow = createGameFlow(world, canvas)
+  // Shop signs and faces are drawn with the Barlow fonts: give them a moment to load.
+  await Promise.race([document.fonts.ready, sleep(2500)])
+  await preloadCharacterModels()
+  setupGame(world, ctx, { level: location.hash === '#proving-ground' ? 'proving-ground' : 'city' })
+
+  const flow = createGameFlow(world, canvas, ctx.audio, render)
   attachInput(world, canvas, { onPauseRequest: flow.pause })
   startLoop(world, ctx, pipeline)
+  // Dev only (stripped from production builds): inspect the game from the browser console.
+  if (import.meta.env.DEV) Object.assign(window, { __game: { world, ctx, flow } })
 
   createRoot(document.getElementById('ui')!).render(
     <StrictMode>
