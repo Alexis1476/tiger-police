@@ -1,4 +1,4 @@
-# Presidente en Bogotá
+# Patria Milagro
 
 A cartoonish 3D game set in downtown Bogotá. Patrol Plaza de Bolívar and La Candelaria with a
 rubber-bullet pistol: stun bandits, arrest them before they recover, and don't shoot citizens.

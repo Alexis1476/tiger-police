@@ -4,17 +4,18 @@ import type { Look } from './humanoid'
 
 const SKINS = ['#f1c7a4', '#e6b08a', '#d49a70', '#b97d55', '#98603f', '#774a30']
 
-/** The player: a caricature president in a police vest, pistol in hand. */
+/** The player: a caricature president in a navy suit and tie, beard, pistol in hand. */
 export const PRESIDENT: Look = {
-  skin: '#e0a47a',
-  top: 0x1e2a44,
-  pants: 0x1b2336,
-  shoes: 0x121214,
-  hair: 'quiff',
-  hairColor: 0x3b2718,
-  headScale: 1.08,
-  nose: 1.45,
-  face: { mouth: 'grin', blush: true, browW: 8, brow: '#2a1a10', eyeW: 11, eyeH: 14 },
+  skin: '#d99b72',
+  top: 0xf4f3ee, // the shirt; the suit jacket goes over it
+  sleeve: 0x1a2440,
+  pants: 0x1f2d4d,
+  shoes: 0x161a24,
+  hair: 'receding',
+  hairColor: 0x1f212a,
+  headScale: 1.1,
+  nose: 1.25,
+  face: { mouth: 'smile', googly: true, beard: '#24262e', browW: 9, brow: '#1c1d24', eyeGap: 34, eyeW: 16, eyeH: 17 },
   extras: 'president',
 }
 

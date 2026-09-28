@@ -36,12 +36,12 @@ function Title({ flow, touch }: { flow: GameFlow; touch: boolean }) {
       <div className="card">
         <div className="kicker">Bogotá · 2.640 m s. n. m.</div>
         <h1>
-          Presidente
+          Patria
           <br />
-          <span>en Bogotá</span>
+          <span>Milagro</span>
         </h1>
         <p>
-          Patrulla la Plaza de Bolívar y La Candelaria con chaleco de policía y pistola de balas de goma. Aturde a
+          Patrulla la Plaza de Bolívar y La Candelaria de traje y con pistola de balas de goma. Aturde a
           los bandidos y arréstalos antes de que se recuperen. Dispararle a un ciudadano cuesta una multa.
         </p>
         {touch ? <TouchHelp /> : <Controls />}

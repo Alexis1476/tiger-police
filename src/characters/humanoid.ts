@@ -22,6 +22,10 @@ export type FaceStyle = {
   eyeH?: number
   iris?: string
   bandana?: string
+  /** Full short beard and moustache, painted in this colour. */
+  beard?: string
+  /** Big round cartoon eyes with small pupils. */
+  googly?: boolean
 }
 
 /** Everything that makes one character look different from another. */
@@ -35,7 +39,7 @@ export type Look = {
   skirt?: number
   legs?: string
   shortSleeve?: boolean
-  hair?: 'none' | 'short' | 'buzz' | 'long' | 'bun' | 'quiff'
+  hair?: 'none' | 'short' | 'buzz' | 'long' | 'bun' | 'quiff' | 'receding'
   hairColor?: number
   hat?: 'cap' | 'hood' | 'sombrero'
   hatColor?: number
@@ -116,6 +120,26 @@ function makeFaceSet(skin: string, f: FaceStyle): Record<FaceMode, THREE.Texture
           g.ellipse(cx, ey + 66, 74, 38, 0, 0, Math.PI * 2)
           g.fill()
         }
+        if (f.beard) {
+          // Sideburns down the jaw, over the chin and up into a moustache; lips drawn on top.
+          const my = ey + 52
+          g.fillStyle = f.beard
+          g.beginPath()
+          g.moveTo(cx - 104, ey - 8)
+          g.lineTo(cx - 86, ey - 8)
+          g.quadraticCurveTo(cx - 80, ey + 38, cx - 42, my - 8)
+          g.quadraticCurveTo(cx, my - 20, cx + 42, my - 8)
+          g.quadraticCurveTo(cx + 80, ey + 38, cx + 86, ey - 8)
+          g.lineTo(cx + 104, ey - 8)
+          g.lineTo(cx + 104, H)
+          g.lineTo(cx - 104, H)
+          g.closePath()
+          g.fill()
+          g.fillStyle = '#c4826c'
+          g.beginPath()
+          g.ellipse(cx, my + 1, 16, 4.5, 0, 0, Math.PI * 2)
+          g.fill()
+        }
         if (f.blush) {
           g.fillStyle = 'rgba(225,95,85,0.22)'
           for (const s of [-1, 1]) {
@@ -154,14 +178,22 @@ function makeFaceSet(skin: string, f: FaceStyle): Record<FaceMode, THREE.Texture
             g.beginPath()
             g.ellipse(x, ey, ew, eh, 0, 0, Math.PI * 2)
             g.fill()
-            g.fillStyle = f.iris ?? '#4a2f1f'
-            g.beginPath()
-            g.ellipse(x + s * 0.6, ey + 1.5, ew * 0.64, eh * 0.68, 0, 0, Math.PI * 2)
-            g.fill()
-            g.fillStyle = '#110b08'
-            g.beginPath()
-            g.ellipse(x + s * 0.6, ey + 1.5, ew * 0.3, eh * 0.34, 0, 0, Math.PI * 2)
-            g.fill()
+            if (f.googly) {
+              // A small dark pupil looking slightly inward, like the reference sheet.
+              g.fillStyle = f.iris ?? '#1b1d24'
+              g.beginPath()
+              g.ellipse(x - s * ew * 0.22, ey + 1, ew * 0.4, eh * 0.4, 0, 0, Math.PI * 2)
+              g.fill()
+            } else {
+              g.fillStyle = f.iris ?? '#4a2f1f'
+              g.beginPath()
+              g.ellipse(x + s * 0.6, ey + 1.5, ew * 0.64, eh * 0.68, 0, 0, Math.PI * 2)
+              g.fill()
+              g.fillStyle = '#110b08'
+              g.beginPath()
+              g.ellipse(x + s * 0.6, ey + 1.5, ew * 0.3, eh * 0.34, 0, 0, Math.PI * 2)
+              g.fill()
+            }
             g.fillStyle = 'rgba(255,255,255,0.95)'
             g.beginPath()
             g.arc(x - 2.5, ey - 3.5, 2.6, 0, Math.PI * 2)
@@ -268,36 +300,6 @@ function makeFaceSet(skin: string, f: FaceStyle): Record<FaceMode, THREE.Texture
 }
 
 const textures = lazy(() => ({
-  vest: canvasTex(
-    256,
-    256,
-    (g, w, h) => {
-      g.fillStyle = '#cde53a'
-      g.fillRect(0, 0, w, h)
-      speckle(g, w, h, 5000, ['#b9d030', '#dbf05a'], 0.5)
-      g.fillStyle = '#c3c8cb'
-      g.fillRect(0, h * 0.3, w, h * 0.1)
-      g.fillRect(0, h * 0.62, w, h * 0.1)
-      g.fillStyle = 'rgba(255,255,255,0.45)'
-      g.fillRect(0, h * 0.32, w, h * 0.02)
-      g.fillRect(0, h * 0.64, w, h * 0.02)
-    },
-    { repeat: false },
-  ),
-  police: canvasTex(
-    512,
-    128,
-    (g, w, h) => {
-      g.fillStyle = '#cde53a'
-      g.fillRect(0, 0, w, h)
-      g.fillStyle = '#10233f'
-      g.font = '800 88px "Barlow Condensed", "Arial Narrow", sans-serif'
-      g.textAlign = 'center'
-      g.textBaseline = 'middle'
-      g.fillText('POLICÍA', w / 2, h / 2 + 4)
-    },
-    { repeat: false },
-  ),
   bag: canvasTex(
     256,
     128,
@@ -364,6 +366,19 @@ function addHair(h: Humanoid, o: Look) {
   const style = o.hair ?? 'short'
   if (style === 'none') return
   const hm = M(o.hairColor ?? 0x2a1c14, 0.92)
+  if (style === 'receding') {
+    // A high, receding hairline: hair on the crown, the back and the sides above the ears. Double
+    // sided so the shells' cut edges don't show the sky through them.
+    const hr = std({ color: o.hairColor ?? 0x2a1c14, roughness: 0.92, side: THREE.DoubleSide })
+    const top = mesh(new THREE.SphereGeometry(0.184, 22, 6, 0, Math.PI * 2, 0, Math.PI * 0.3), hr, h.head, 0, 0.004, -0.012)
+    top.scale.set(0.97, 1.07, 1.0)
+    top.rotation.x = -0.24
+    const crown = mesh(new THREE.SphereGeometry(0.183, 22, 12, Math.PI - 0.25, Math.PI + 0.5, 0, Math.PI * 0.56), hr, h.head, 0, 0.004, -0.012)
+    crown.scale.set(0.97, 1.07, 1.0)
+    const nape = mesh(new THREE.SphereGeometry(0.182, 22, 8, Math.PI, Math.PI, Math.PI * 0.5, Math.PI * 0.22), hr, h.head, 0, 0, -0.004)
+    nape.scale.set(0.97, 1.07, 1.0)
+    return
+  }
   const cap = mesh(new THREE.SphereGeometry(0.184, 22, 12, 0, Math.PI * 2, 0, Math.PI * (style === 'buzz' ? 0.38 : 0.43)), hm, h.head, 0, 0.004, -0.006)
   cap.scale.set(0.97, 1.07, 1.0)
   cap.rotation.x = -0.3
@@ -404,23 +419,47 @@ function addHat(h: Humanoid, o: Look) {
 
 /** Outfit pieces that define a character type. */
 const EXTRAS = {
+  /** Navy suit over the white shirt (the torso), black tie, flag pin and a short beard. */
   president(h: Humanoid) {
-    const tx = textures()
-    mesh(new RoundedBoxGeometry(0.475, 0.44, 0.3, 2, 0.075), std({ map: tx.vest, roughness: 0.75 }), h.spine, 0, 0.33, 0)
-    const plate = std({ map: tx.police, roughness: 0.7 })
-    mesh(new THREE.PlaneGeometry(0.36, 0.09), plate, h.spine, 0, 0.43, -0.153).rotation.y = Math.PI
-    mesh(new THREE.PlaneGeometry(0.15, 0.0375), plate, h.spine, 0.1, 0.47, 0.153)
-    const sash = new THREE.Group()
-    sash.position.set(0, 0.3, 0)
-    sash.rotation.z = 0.72
-    h.spine.add(sash)
-    const sg = new THREE.BoxGeometry(1, 1, 1)
-    for (const [c, x, w] of [[0xfcd116, -0.03, 0.07], [0x003893, 0.02, 0.035], [0xce1126, 0.055, 0.035]]) {
-      mesh(sg, M(c, 0.6), sash, x, 0, 0).scale.set(w, 0.8, 0.325)
+    const suitHex = h.look.sleeve ?? 0x1a2440
+    const suit = M(suitHex, 0.78)
+    const white = M(0xf4f3ee, 0.8)
+    const black = M(0x15161a, 0.55)
+    // Back and sides of the jacket, running past the belt like a suit coat.
+    mesh(new RoundedBoxGeometry(0.47, 0.68, 0.2, 2, 0.06), suit, h.spine, 0, 0.24, -0.035)
+    // Two front panels (one mirrored) that open in a V over the shirt, each with a lapel.
+    const v = (x: number, y: number) => new THREE.Vector2(x, y)
+    const flat = (pts: THREE.Vector2[], depth: number) => new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth, bevelEnabled: false })
+    const panel = flat([v(-0.01, -0.1), v(0.235, -0.1), v(0.235, 0.575), v(0.085, 0.59), v(0, 0.27), v(-0.01, 0.27)], 0.07)
+    const lapelGeo = flat([v(0.085, 0.59), v(0.15, 0.56), v(0.128, 0.5), v(0.148, 0.47), v(0, 0.27)], 0.012)
+    const lapel = M(shade(suitHex, -0.05), 0.6)
+    for (const side of [1, -1]) {
+      const half = new THREE.Group()
+      half.scale.x = side
+      h.spine.add(half)
+      mesh(panel, suit, half, 0, 0, 0.068)
+      mesh(lapelGeo, lapel, half, 0, 0, 0.138)
     }
-    mesh(new RoundedBoxGeometry(0.2, 0.06, 0.16, 2, 0.02), M(0xf5f5f2, 0.8), h.spine, 0, 0.58, 0.03)
-    mesh(new RoundedBoxGeometry(0.13, 0.036, 0.045, 2, 0.016), M(0x3a2618, 0.9), h.head, 0, -0.058, 0.157).rotation.x = -0.1
-    mesh(new RoundedBoxGeometry(0.05, 0.1, 0.04, 2, 0.01), M(0x1a1a1a, 0.5), h.spine, 0.14, 0.5, 0.16)
+    mesh(new THREE.SphereGeometry(0.012, 8, 6), black, h.spine, 0, 0.17, 0.14)
+    // Shirt collar, tie knot and tie.
+    mesh(new RoundedBoxGeometry(0.2, 0.06, 0.16, 2, 0.02), white, h.spine, 0, 0.58, 0.03)
+    mesh(new RoundedBoxGeometry(0.05, 0.045, 0.03, 2, 0.01), black, h.spine, 0, 0.535, 0.126)
+    mesh(new THREE.BoxGeometry(0.052, 0.25, 0.012), black, h.spine, 0, 0.39, 0.13)
+    mesh(new THREE.BoxGeometry(0.037, 0.037, 0.012), black, h.spine, 0, 0.265, 0.13).rotation.z = Math.PI / 4
+    // Flag pin on the left lapel.
+    const pin = new THREE.Group()
+    pin.position.set(0.13, 0.46, 0.152)
+    h.spine.add(pin)
+    for (const [c, y, hh] of [[0xfcd116, 0.006, 0.012], [0x003893, -0.003, 0.006], [0xce1126, -0.009, 0.006]]) {
+      mesh(new THREE.BoxGeometry(0.03, hh, 0.006), M(c, 0.5), pin, 0, y, 0)
+    }
+    // White shirt cuffs showing at the wrists.
+    for (const hand of [h.handL, h.handR]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.035, 12), white, hand, 0, 0.055, 0)
+    // The beard's volume on the chin and jaw (the rest is painted on the face).
+    if (h.look.face?.beard) {
+      const chin = mesh(new THREE.SphereGeometry(0.176, 20, 8, Math.PI / 2 - 1.15, 2.3, Math.PI * 0.72, Math.PI * 0.22), M(h.look.face.beard, 0.95), h.head, 0, 0, 0.004)
+      chin.scale.set(0.97, 1.07, 1.02)
+    }
     const gun = makeGun()
     gun.position.set(0, -0.02, 0.03)
     gun.rotation.x = Math.PI / 2
