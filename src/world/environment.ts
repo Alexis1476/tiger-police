@@ -40,6 +40,9 @@ export function createEnvironment(render: Render, materials: CityMaterials, rng:
   const envScene = new THREE.Scene()
   const envSky = new Sky()
   envSky.scale.setScalar(900)
+  // No sun disc here: the directional light already carries the sun. PMREM would otherwise
+  // blur the disc's huge HDR value over the whole map and wash every surface out by day.
+  envSky.material.uniforms.showSunDisc.value = 0
   envScene.add(envSky)
   const pmrem = render.renderer ? new THREE.PMREMGenerator(render.renderer) : null
   let envTarget: THREE.WebGLRenderTarget | null = null
@@ -141,6 +144,11 @@ export function createEnvironment(render: Render, materials: CityMaterials, rng:
       hemi.groundColor.copy(C.groundNight).lerp(C.groundDay, dayF)
       fog.color.copy(tmp.copy(C.nightFog).lerp(C.dayFog, dayF).lerp(C.goldFog, gold * 0.65))
       if (render.renderer) render.renderer.toneMappingExposure = lerp(1.1, 0.74, dayF)
+      // The daylit sky map is far brighter than the lights (three's Sky lost its built-in
+      // compression after r160). At full strength it flattened the city to white and drowned
+      // the sun's shadows. It follows the sun's height: a low sun leaves the sky dim, so dusk and
+      // night keep more of it.
+      scene.environmentIntensity = lerp(1, 0.3, smooth(0.1, 0.6, s))
       render.setBloomNight(nightF)
       materials.glassLit.emissiveIntensity = nightF * 2.4 + 0.02
       materials.glow.emissiveIntensity = 0.35 + nightF * 5
