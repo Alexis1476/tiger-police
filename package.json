@@ -1,0 +1,33 @@
+{
+  "name": "tiger-police",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Jeu 3D caricatural dans le centre de Bogotá — three.js + ECS (Koota) + Rapier.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alexis1476/tiger-police.git"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0",
+    "koota": "^0.6.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  }
+}
