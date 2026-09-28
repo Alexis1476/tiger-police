@@ -15,6 +15,12 @@ export type Quality = 'high' | 'low'
  * day. Measured: by day it must be ~6 to add no haze; at night ~1 keeps the lamp/neon glow.
  */
 const bloomThreshold = (night: number) => 6 + (1 - 6) * night
+/**
+ * Weights of the bloom's five blur sizes, smallest first (three's default is 1, .8, .6, .4, .2).
+ * At night the lamp globes and signs reach ~5x, and the default's wide blurs spread them into a
+ * grey veil over the whole sky. Keeping mostly the small blurs leaves a tight glow per light.
+ */
+const BLOOM_FACTORS = [1, 0.45, 0.12, 0.03, 0]
 export type Render = ReturnType<typeof createRenderer>
 
 export function createRenderer(canvas: HTMLCanvasElement) {
@@ -71,7 +77,8 @@ export function createRenderer(canvas: HTMLCanvasElement) {
       } catch (e) {
         console.warn('GTAO disabled', e)
       }
-      bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0.5, bloomThreshold(state.night))
+      bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0, bloomThreshold(state.night))
+      bloom.compositeMaterial.uniforms.bloomFactors.value = BLOOM_FACTORS
       composer.addPass(bloom)
       composer.addPass(new OutputPass())
     }
